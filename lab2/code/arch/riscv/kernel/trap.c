@@ -13,7 +13,7 @@ void trap_handler(unsigned long scause, unsigned long sepc) {
     if(scause&interrupt == interrupt){
         // if timer interrupt or not
         if(scause&timer == timer){
-            printk("%s","kernel is running!\n[S] Supervisor Mode Timer Interrupt\n");
+            printk("%s","[S] Supervisor Mode Timer Interrupt\n");
             clock_set_next_event();
         }
     }
