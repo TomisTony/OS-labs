@@ -5,6 +5,7 @@
 _start:
         la sp, boot_stack_top
         call mm_init
+        call task_init
     # ------------------
         # set stvec = _traps
         la t0, _traps
@@ -17,8 +18,21 @@ _start:
     # ------------------
         # set first time interrupt
         rdtime t0
-        li t1,10000000
+        li t1,30000000
         add t0,t0,t1
+
+        # store a0~a7
+        addi sp,sp,-64
+        sd a0,0(sp)
+        sd a1,8(sp)
+        sd a2,16(sp)
+        sd a3,24(sp)
+        sd a4,32(sp)
+        sd a5,40(sp)
+        sd a6,48(sp)
+        sd a7,56(sp)
+
+        # ecall
         mv a7, zero
         mv a6, zero
         mv a0, t0
@@ -28,6 +42,18 @@ _start:
         mv a4, zero
         mv a5, zero
         ecall
+
+        # reload a0~a7
+        ld a0,0(sp)
+        ld a1,8(sp)
+        ld a2,16(sp)
+        ld a3,24(sp)
+        ld a4,32(sp)
+        ld a5,40(sp)
+        ld a6,48(sp)
+        ld a7,56(sp)
+        addi sp,sp,64
+
     # ------------------
         # set sstatus[SIE] = 1
         csrr t0, sstatus
@@ -35,7 +61,6 @@ _start:
         csrw sstatus,t0
 
     # ------------------
-        call task_init
         call start_kernel
 
     .section .bss.stack

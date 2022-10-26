@@ -9,11 +9,11 @@ void trap_handler(unsigned long scause, unsigned long sepc) {
 
     // YOUR CODE HERE
     unsigned long interrupt = 1 << 63;
-    unsigned long timer = 1 << 4;
+    unsigned long timer = 0x05;
     // interrupt or exception
-    if(scause&interrupt == interrupt){
+    if((scause&interrupt) == interrupt){
         // if timer interrupt or not
-        if(scause&timer == timer){
+        if((scause&timer) == timer){
             printk("%s","[S] Supervisor Mode Timer Interrupt\n");
             clock_set_next_event();
             do_timer();
