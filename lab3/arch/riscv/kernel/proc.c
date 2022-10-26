@@ -128,7 +128,6 @@ void schedule(void)
             task[i]->counter = rand();
         }
         //重新选择less
-        uint64 less = NR_TASKS;
         for(int i = 1; i < NR_TASKS; i++){
             if(task[i]->counter > 0){
                 less = i;
@@ -141,7 +140,6 @@ void schedule(void)
                 less = i;
         }
     }
-
     //DEBUG: 打印线程信息
     for(int i = 0; i < NR_TASKS; i++){
         printk("pid=%d counter=%d\n",task[i]->pid,task[i]->counter);

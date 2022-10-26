@@ -18,7 +18,7 @@ _start:
     # ------------------
         # set first time interrupt
         rdtime t0
-        li t1,30000000
+        li t1,10000000
         add t0,t0,t1
 
         # store a0~a7
