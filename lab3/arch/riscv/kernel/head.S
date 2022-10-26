@@ -35,6 +35,7 @@ _start:
         csrw sstatus,t0
 
     # ------------------
+        call task_init
         call start_kernel
 
     .section .bss.stack

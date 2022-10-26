@@ -1,7 +1,7 @@
     .section .text.entry
     .align 2
     .globl _traps 
-    .global __dummy
+    .globl __dummy
     .globl __switch_to
 __switch_to:
     # save state to prev process
@@ -22,7 +22,6 @@ __switch_to:
         sd s11, 144(a0)
     # restore state from next process
     # YOUR CODE HERE
-        ld ra, 40(a1)
         ld ra, 40(a1)
         ld sp, 48(a1)
         ld s0, 56(a1)
