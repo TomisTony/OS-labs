@@ -609,8 +609,48 @@ QEMU: Terminated
 
 ## 2
 
-在此之后每一次ra的返回点依旧是\_\_dummy。因为我们在线程初始化的时候将线程的ra赋上了\_\_dummy，而之后我们则是使用
+我们来看从pid=1的线程切换到pid=2的线程，由于我们是在\_\_switch\_to的第一行就保存了ra，因此我们在\_\_switch\_to设一个断点，而我们可以通过寄存器的查看得知，此时的ra的值是调用\_\_switch\_to的后一行代码。
 
-我们来看从pid=12的线程切换到pid=28的线程，由于我们是在\_\_switch\_to的第一行就保存了ra，因此我们在\_\_switch\_to设一个断点，而我们可以通过寄存器的查看得知，此时的ra的值是调用\_\_switch\_to的后一行代码。
+![image-20221027231319535](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231319.png)
 
-![image-20221027223530912](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027223531.png)
+我们可以在这个ra处设一个断点，然后将我们的第一个断点删除，继续运行程序，此时的程序将会在某个线程进行第二次调度的时候停止。
+
+![image-20221027231519909](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231519.png)
+
+我们可以看到线程已经返回到了之前储存的ra。
+
+![image-20221027231547393](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231547.png)
+
+之后他将会返回schedule()，即我们调用switch\_to的函数
+
+![image-20221027231641080](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231641.png)
+
+同理，他将会返回do_timer()
+
+![image-20221027231715877](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231715.png)
+
+然后是trap_handler
+
+![image-20221027231801768](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231801.png)
+
+随后是我们的clock_set_next_event()
+
+![image-20221027231930583](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231930.png)
+
+![image-20221027232039673](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027232039.png)
+
+随后，将会返回到我们的_trap
+
+![image-20221027232110989](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027232111.png)
+
+随后，终于在_trap函数中，通过sret指令返回到时钟中断前该线程的执行地址
+
+![image-20221027232221957](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027232222.png)
+
+我们可以看到，此时的sepc指向的是dummy()中的一条汇编语句
+
+![image-20221027232318068](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027232318.png)
+
+总结：
+
+ra储存的是\_\_switch_to的地址，然后在线程恢复了ra之后，将会执行完时钟中断剩余的代码，并通过sret最终返回至dummy()函数。
