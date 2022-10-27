@@ -24,7 +24,7 @@
 
 ![image-20221026221634074](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/image-20221026221634074.png)
 
-同样地为`task[1]` ~ `task[NR_TASKS - 1]`进行初始化，此时`ra`为``__dummy`, `sp`设置为task[i]+PGSIZE则是因为
+同样地为`task[1]` ~ `task[NR_TASKS - 1]`进行初始化，此时`ra`为``__dummy`, `sp`设置为task[i]+PGSIZE
 
 ![image-20221026221921779](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/image-20221026221921779.png)
 
@@ -213,18 +213,18 @@ void do_timer(void)
 
 ### 4.1 编译
 
-首先修改`/arch/riscv/kernel/Makefile`, 添加
+首先修改顶层的`Makefile`, 更改
 
 ```makefile
-CFLAG += -D PRIORITY
+CFLAG = ${CF} ${INCLUDE} -D SJF
 ```
 
 来选择调度算法为`PRIORITY`。
 
-若想使用`SJF`，则可以通过修改`/arch/riscv/kernel/Makefile`, 将`CFLAG`赋值为SJF。
+若想使用`SJF`，则可以通过修改顶层`Makefile`, 将`CFLAG`赋值为PRIORITY。
 
-```
-CFLAG += -D SJF
+```makefile
+CFLAG = ${CF} ${INCLUDE} -D PRIORITY
 ```
 
 修改完成后，直接进行make all即可完成编译
@@ -597,3 +597,20 @@ QEMU: Terminated
 
 经检测，PRIORITY调度中完成了线程切换与重新赋值，通过测试。
 
+# 思考题
+
+## 1
+
+因为s0~s11是callee save的寄存器，因此需要在线程调度的时候储存。
+
+而sp与ra都储存了独属于该线程的数据（栈指针和return address），因此也需要被储存。
+
+其余的寄存器均为caller save寄存器，因此不需要由该线程单独储存。
+
+## 2
+
+在此之后每一次ra的返回点依旧是\_\_dummy。因为我们在线程初始化的时候将线程的ra赋上了\_\_dummy，而之后我们则是使用
+
+我们来看从pid=12的线程切换到pid=28的线程，由于我们是在\_\_switch\_to的第一行就保存了ra，因此我们在\_\_switch\_to设一个断点，而我们可以通过寄存器的查看得知，此时的ra的值是调用\_\_switch\_to的后一行代码。
+
+![image-20221027223530912](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027223531.png)
