@@ -106,7 +106,9 @@ void schedule(void)
     // SJF
 
     // WARNING: 这里的代码基于所有线程只有一种状态。若所有线程不止RUNNING状态，则需更改逻辑
+   
 
+    #ifdef SJF
     uint64 less = NR_TASKS;
     for(int i = 1; i < NR_TASKS; i++){
         if(task[i]->counter > 0){
@@ -126,6 +128,7 @@ void schedule(void)
         for (int i = 1; i < NR_TASKS; i++)
         {
             task[i]->counter = rand();
+            printk("SET [PID = %d COUNTER = %d]\n", i, task[i]->counter);
         }
         //重新选择less
         for(int i = 1; i < NR_TASKS; i++){
@@ -141,11 +144,54 @@ void schedule(void)
         }
     }
     //DEBUG: 打印线程信息
-    for(int i = 0; i < NR_TASKS; i++){
-        printk("pid=%d counter=%d\n",task[i]->pid,task[i]->counter);
+    for(int i = 1; i < NR_TASKS; i++){
+        printk("pid=%d counter=%d\n",task[i]->pid, task[i]->counter);
     }
-    printk("now:%d  less:%d\n",current->pid,task[less]->pid);
-
+    printk("switch to [PID = %d COUNTER = %d]\n",task[less]->pid, task[less]->counter);
     switch_to(task[less]);
+    #endif
 
+    #ifdef PRIORITY
+     uint64 less = NR_TASKS;
+    for(int i = 1; i < NR_TASKS; i++){
+        if(task[i]->counter > 0){
+            less = i;
+            break;
+        } 
+    }
+    for (int i = less + 1; i < NR_TASKS; i++)
+    {
+        if (task[i]->counter != 0 && task[i]->priority > task[less]->priority)
+            less = i;
+    }
+    //若所有线程counter都已经用尽，重新分配counter与priority
+    if (less == NR_TASKS)
+    {
+        //重置
+        for (int i = 1; i < NR_TASKS; i++)
+        {
+            task[i]->counter = rand();
+            task[i]->priority = rand();
+            printk("SET [PID = %d PRIORITY = %d COUNTER = %d]\n", i, task[i]->priority, task[i]->counter);
+        }
+        //重新选择less
+        for(int i = 1; i < NR_TASKS; i++){
+            if(task[i]->counter > 0){
+                less = i;
+                break;
+            } 
+        }
+        for (int i = less + 1; i < NR_TASKS; i++)
+        {
+            if (task[i]->counter != 0 && task[i]->priority > task[less]->priority)
+                less = i;
+        }
+    }
+    //DEBUG: 打印线程信息
+    for(int i = 1; i < NR_TASKS; i++){
+        printk("pid=%d PRIORITY = %d counter=%d\n",task[i]->pid,task[i]->priority, task[i]->counter);
+    }
+    printk("switch to [PID = %d PRIORITY = %d COUNTER = %d]\n",task[less]->pid, task[less]->priority, task[less]->counter);
+    switch_to(task[less]);
+    #endif
 }
