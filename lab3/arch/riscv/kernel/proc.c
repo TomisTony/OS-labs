@@ -147,7 +147,7 @@ void schedule(void)
     for(int i = 1; i < NR_TASKS; i++){
         printk("pid=%d counter=%d\n",task[i]->pid, task[i]->counter);
     }
-    printk("switch to [PID = %d COUNTER = %d]\n",task[less]->pid, task[less]->counter);
+    printk("using SJF, switch to [PID = %d COUNTER = %d]\n",task[less]->pid, task[less]->counter);
     switch_to(task[less]);
     #endif
 
@@ -191,7 +191,7 @@ void schedule(void)
     for(int i = 1; i < NR_TASKS; i++){
         printk("pid=%d PRIORITY = %d counter=%d\n",task[i]->pid,task[i]->priority, task[i]->counter);
     }
-    printk("switch to [PID = %d PRIORITY = %d COUNTER = %d]\n",task[less]->pid, task[less]->priority, task[less]->counter);
+    printk("using PRIORITY, switch to [PID = %d PRIORITY = %d COUNTER = %d]\n",task[less]->pid, task[less]->priority, task[less]->counter);
     switch_to(task[less]);
     #endif
 }
