@@ -36,8 +36,8 @@ _start:
         csrw sstatus,t0
 
     # ------------------
-    la sp, boot_stack_top
-    call start_kernel
+        la sp, boot_stack_top
+        call start_kernel
     
     .section .bss.stack
     .globl boot_stack
