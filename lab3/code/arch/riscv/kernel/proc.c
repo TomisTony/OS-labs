@@ -121,7 +121,7 @@ void schedule(void)
         if (task[i]->counter != 0 && task[i]->counter < task[less]->counter)
             less = i;
     }
-    //若没有线程比idle(counter=0)大
+    //找了一圈还是没有
     if (less == NR_TASKS)
     {
         //重置
@@ -144,9 +144,9 @@ void schedule(void)
         }
     }
     //DEBUG: 打印线程信息
-    for(int i = 1; i < NR_TASKS; i++){
-        printk("pid=%d counter=%d\n",task[i]->pid, task[i]->counter);
-    }
+    // for(int i = 1; i < NR_TASKS; i++){
+    //     printk("pid=%d counter=%d\n",task[i]->pid, task[i]->counter);
+    // }
     printk("using SJF, switch to [PID = %d COUNTER = %d]\n",task[less]->pid, task[less]->counter);
     switch_to(task[less]);
     #endif
@@ -188,9 +188,9 @@ void schedule(void)
         }
     }
     //DEBUG: 打印线程信息
-    for(int i = 1; i < NR_TASKS; i++){
-        printk("pid=%d PRIORITY = %d counter=%d\n",task[i]->pid,task[i]->priority, task[i]->counter);
-    }
+    // for(int i = 1; i < NR_TASKS; i++){
+    //     printk("pid=%d PRIORITY = %d counter=%d\n",task[i]->pid,task[i]->priority, task[i]->counter);
+    // }
     printk("using PRIORITY, switch to [PID = %d PRIORITY = %d COUNTER = %d]\n",task[less]->pid, task[less]->priority, task[less]->counter);
     switch_to(task[less]);
     #endif

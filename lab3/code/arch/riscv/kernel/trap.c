@@ -14,7 +14,8 @@ void trap_handler(unsigned long scause, unsigned long sepc)
     if (timer == scause)
     {
         printk("%s", "[S] Supervisor Mode Timer Interrupt\n");
-        do_timer();
         clock_set_next_event();
+        do_timer();
+        
     }
 }

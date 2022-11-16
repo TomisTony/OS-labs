@@ -609,7 +609,7 @@ QEMU: Terminated
 
 ## 2
 
-我们来看从pid=1的线程切换到pid=2的线程，由于我们是在\_\_switch\_to的第一行就保存了ra，因此我们在\_\_switch\_to设一个断点，而我们可以通过寄存器的查看得知，此时的ra的值是调用\_\_switch\_to的后一行代码。
+我们来看从pid=1的线程切换到pid=2的线程，由于我们是在\_\_switch\_to的第一行就保存了ra，因此我们在\_\_switch\_to设一个断点，而我们可以通过寄存器的查看得知，此时的ra的值是调用\_\_switch\_to()的后一行代码的地址。
 
 ![image-20221027231319535](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231319.png)
 
@@ -617,7 +617,7 @@ QEMU: Terminated
 
 ![image-20221027231519909](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231519.png)
 
-我们可以看到线程已经返回到了之前储存的ra。
+我们可以看到pc已经返回到了之前储存的ra。
 
 ![image-20221027231547393](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231547.png)
 
@@ -632,12 +632,6 @@ QEMU: Terminated
 然后是trap_handler
 
 ![image-20221027231801768](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231801.png)
-
-随后是我们的clock_set_next_event()
-
-![image-20221027231930583](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027231930.png)
-
-![image-20221027232039673](https://br-1313886514.cos.ap-shanghai.myqcloud.com/20221027232039.png)
 
 随后，将会返回到我们的_trap
 
