@@ -1,4 +1,3 @@
-#include "defs.h"
 .extern start_kernel
 .extern mm_init
 .extern early_pgtbl
@@ -69,14 +68,16 @@ _start:
 relocate:
     # set ra = ra + PA2VA_OFFSET
     # set sp = sp + PA2VA_OFFSET (If you have set the sp before)
-    li t0, PA2VA_OFFSET
+    li t0, 0xffffffe000000000
+    li t1, 0x0000000080000000
+    sub t0, t0,t1
     add ra, ra, t0
-    add sp, sp, PA2VA_OFFSET
+    add sp, sp, t0
     # set satp with early_pgtbl
     la t0, early_pgtbl
     srli t1, t0, 12
     li t0,8
-    slli t1, t1, 60
+    slli t0, t1, 60
     add t0,t0,t1
     csrw satp,t0
     # flush tlb
