@@ -4,7 +4,13 @@
     .section .text.init
     .globl _start
 _start:
+        # 修改sp 
+        li t0, 0xffffffe000000000
+        li t1, 0x0000000080000000
+        sub t0, t0, t1
         la sp, boot_stack_top
+        sub sp,sp,t0
+
         call setup_vm
         call relocate
         call mm_init
@@ -65,21 +71,29 @@ _start:
 
     # ------------------
         call start_kernel
+
 relocate:
     # set ra = ra + PA2VA_OFFSET
     # set sp = sp + PA2VA_OFFSET (If you have set the sp before)
     li t0, 0xffffffe000000000
     li t1, 0x0000000080000000
-    sub t0, t0,t1
+    sub t0, t0, t1
     add ra, ra, t0
     add sp, sp, t0
+
     # set satp with early_pgtbl
-    la t0, early_pgtbl
-    srli t1, t0, 12
-    li t0,8
-    slli t0, t1, 60
-    add t0,t0,t1
-    csrw satp,t0
+
+    # PPN
+    la t1, early_pgtbl
+    sub t1,t1,t0
+    srli t1, t1, 12
+    # MODE
+    li t2,8
+    slli t2, t2, 60
+    # set satp
+    add t1,t1,t2
+    csrw satp,t1
+
     # flush tlb
     sfence.vma zero, zero
 
@@ -87,6 +101,8 @@ relocate:
     fence.i
 
     ret
+
+
     .section .bss.stack
     .globl boot_stack
 boot_stack:

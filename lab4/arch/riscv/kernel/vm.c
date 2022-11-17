@@ -17,10 +17,13 @@ void setup_vm(void)
         低 30 bit 作为 页内偏移 这里注意到 30 = 9 + 9 + 12， 即我们只使用根页表， 根页表的每个 entry 都对应 1GB 的区域。
     3. Page Table Entry 的权限 V | R | W | X 位设置为 1
     */
-    memset(early_pgtbl, 0, PGSIZE);
-    early_pgtbl[getVPN(PHY_START, 2)] = (0xf) | (getVPN(PHY_START,2))<<28;    
-    early_pgtbl[getVPN(VM_START, 2)] = (0xf) | (getVPN(PHY_START,2))<<28;    
-
+    unsigned long true_early_pgtbl = (unsigned long)early_pgtbl - PA2VA_OFFSET;
+    memset((void *)true_early_pgtbl, 0, PGSIZE);
+    ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getVPN(PHY_START, 2)) << 28);
+    ((unsigned long *)true_early_pgtbl)[getVPN(VM_START, 2)] = (0xf) | ((getVPN(PHY_START, 2)) << 28);
+    // memset(early_pgtbl, 0, PGSIZE);
+    // early_pgtbl[getVPN(PHY_START, 2)] = (0xf) | (getVPN(PHY_START, 2)) << 28;
+    // early_pgtbl[getVPN(VM_START, 2)] = (0xf) | (getVPN(PHY_START, 2)) << 28;
 }
 
 /* swapper_pg_dir: kernel pagetable 根目录， 在 setup_vm_final 进行映射。 */
@@ -51,7 +54,6 @@ void setup_vm(void)
 //     asm volatile("fence.i")
 //     return;
 // }
-
 
 // /* 创建多级页表映射关系 */
 // create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {

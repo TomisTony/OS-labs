@@ -35,14 +35,15 @@ void kfree(uint64 addr) {
     return ;
 }
 
-void kfreerange(char *start, char *end) {
-    char *addr = (char *)PGROUNDUP((uint64)start);
-    for (; (uint64)(addr) + PGSIZE <= (uint64)end; addr += PGSIZE) {
+void kfreerange(uint64 start, uint64 end) {
+    uint64 addr = (uint64)PGROUNDUP((uint64)start);
+    for (; addr + PGSIZE <= (uint64)end; addr += PGSIZE) {
         kfree((uint64)addr);
     }
 }
 
 void mm_init(void) {
-    kfreerange(_ekernel, (char *)VM_END);
+    //TODO: kfreerange scause = 0x7
+    kfreerange((uint64)_ekernel, (uint64)(VM_START+PHY_SIZE));
     printk("...mm_init done!\n");
 }
