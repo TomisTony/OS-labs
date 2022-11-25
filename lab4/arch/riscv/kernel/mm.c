@@ -43,7 +43,6 @@ void kfreerange(uint64 start, uint64 end) {
 }
 
 void mm_init(void) {
-    //TODO: kfreerange scause = 0x7
     kfreerange((uint64)_ekernel, (uint64)(VM_START+PHY_SIZE));
     printk("...mm_init done!\n");
 }

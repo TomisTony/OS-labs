@@ -1,6 +1,7 @@
 .extern start_kernel
 .extern mm_init
 .extern early_pgtbl
+
     .section .text.init
     .globl _start
 _start:
@@ -14,6 +15,8 @@ _start:
         call setup_vm
         call relocate
         call mm_init
+        call setup_vm_final
+        
         call task_init
     # ------------------
         # set stvec = _traps
