@@ -18,4 +18,5 @@ void trap_handler(unsigned long scause, unsigned long sepc)
         do_timer();
         
     }
+    else  return;
 }

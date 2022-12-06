@@ -3,6 +3,7 @@
     .globl _traps 
     .globl __dummy
     .globl __switch_to
+    .globl __virtual_switch
 __switch_to:
     # save state to prev process
     # YOUR CODE HERE
@@ -43,6 +44,9 @@ __dummy:
         la t0, dummy
         csrw sepc, t0;
         sret
+__virtual_switch:
+        la t0, mm_init
+        csrw sepc, t0
 _traps:
     # YOUR CODE HERE
     # -----------

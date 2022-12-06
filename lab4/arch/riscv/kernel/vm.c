@@ -42,11 +42,8 @@ void setup_vm(void)
     */
     unsigned long true_early_pgtbl = (unsigned long)early_pgtbl - PA2VA_OFFSET;
     memset((void *)true_early_pgtbl, 0, PGSIZE);
-    ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
+    // ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
     ((unsigned long *)true_early_pgtbl)[getVPN(VM_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
-    // memset(early_pgtbl, 0, PGSIZE);
-    // early_pgtbl[getVPN(PHY_START, 2)] = (0xf) | (getVPN(PHY_START, 2)) << 28;
-    // early_pgtbl[getVPN(VM_START, 2)] = (0xf) | (getVPN(PHY_START, 2)) << 28;
     printk("setup_vm done!\n");
 }
 

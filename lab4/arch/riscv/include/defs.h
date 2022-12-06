@@ -2,8 +2,6 @@
 #define _DEFS_H
 
 
-#include "types.h"
-
 #define csr_read(csr)                          \
     ({                                         \
         register uint64 __v;                   \
