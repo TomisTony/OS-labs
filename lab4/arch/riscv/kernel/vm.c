@@ -42,7 +42,8 @@ void setup_vm(void)
     */
     unsigned long true_early_pgtbl = (unsigned long)early_pgtbl - PA2VA_OFFSET;
     memset((void *)true_early_pgtbl, 0, PGSIZE);
-    // ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
+    // 注释该句开启非等值映射
+    ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
     ((unsigned long *)true_early_pgtbl)[getVPN(VM_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
     printk("setup_vm done!\n");
 }
@@ -138,7 +139,7 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
             *nowPgtblEntryAddress = (getPPNFromPA((uint64)secondEntryAddress - PA2VA_OFFSET) << 10) + 0x1;
         }
         else{
-            secondEntryAddress = getPPNFromEntry(*nowPgtblEntryAddress) << 12 + PA2VA_OFFSET;
+            secondEntryAddress = (getPPNFromEntry(*nowPgtblEntryAddress) << 12) + PA2VA_OFFSET;
         }
 
         //step3: 获取二级页表的存三级页表的Entry的地址
@@ -155,7 +156,7 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
             *nowSecondEntryAddress = (getPPNFromPA((uint64)thirdEntryAddress - PA2VA_OFFSET) << 10) + 0x1;
         }
         else{
-            thirdEntryAddress = (getPPNFromEntry(*nowSecondEntryAddress)) << 12 + PA2VA_OFFSET;
+            thirdEntryAddress = ((getPPNFromEntry(*nowSecondEntryAddress)) << 12) + PA2VA_OFFSET;
         }
 
         //step5: 获取三级页表的存真实物理地址的Entry的地址
