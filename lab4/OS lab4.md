@@ -116,7 +116,7 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
             *nowPgtblEntryAddress = (getPPNFromPA((uint64)secondEntryAddress - PA2VA_OFFSET) << 10) + 0x1;
         }
         else{
-            secondEntryAddress = getPPNFromEntry(*nowPgtblEntryAddress) << 12 + PA2VA_OFFSET;
+            secondEntryAddress = (getPPNFromEntry(*nowPgtblEntryAddress) << 12) + PA2VA_OFFSET;
         }
 
         //step3: 获取二级页表的存三级页表的Entry的地址
@@ -133,7 +133,7 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
             *nowSecondEntryAddress = (getPPNFromPA((uint64)thirdEntryAddress - PA2VA_OFFSET) << 10) + 0x1;
         }
         else{
-            thirdEntryAddress = (getPPNFromEntry(*nowSecondEntryAddress)) << 12 + PA2VA_OFFSET;
+            thirdEntryAddress = ((getPPNFromEntry(*nowSecondEntryAddress)) << 12) + PA2VA_OFFSET;
         }
 
         //step5: 获取三级页表的存真实物理地址的Entry的地址
@@ -252,26 +252,65 @@ make run后查看System.map, 发现`.text`, `.rodata` 的地址已经是虚拟�
 
 ![image-20221205233653761](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/image-20221205233653761.png)
 
+我们可以通过直接打印页表项地址并去内存中寻找该地址来判断是否设置成功，于是我们在`setup_vm_final`中加入打印语句打印最后一级PTE：
+
+![QQ图片20221207155738](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/QQ%E5%9B%BE%E7%89%8720221207155738.jpg)
+
+并用gdb查看确实成功修改了：
+
+![img](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/8EY1%7B23O@_%5D53M9%7D%7B%7B$L8~S.png)
+
+![QQ图片20221207160216](https://suonan-image.oss-cn-hangzhou.aliyuncs.com/img/QQ%E5%9B%BE%E7%89%8720221207160216.jpg)
+
 ### 3.2 为什么我们在 `setup_vm` 中需要做等值映射?
 
 因为在程序刚开始运行时，程序运行在物理地址上，如果不做等值映射，在relocate后，pc值未改变，但其余代码都已经被映射到了虚拟地址上。此时pc就无法正确找到下一条指令的位置。
 
 ### 3.3 在 Linux 中，是不需要做等值映射的。请探索一下不在 `setup_vm` 中做等值映射的方法
 
-通过阅读源码，我了解到了linux的确没有进行等值映射，而是通过设置`satp`后通过中断机制使得地址顺利切换到虚拟地址。
+通过阅读源码，我了解到了linux的确没有进行等值映射，而是通过设置`satp`后通过设置`stvec`指向的地址，使得触发缺页异常机制时能够让地址顺利切换到虚拟地址。
 
-我们同样可以借鉴这样的思路：
+我们同样可以借鉴这样的思路，在`relocate`函数中将将`stvec`寄存器指向我们新创建的标签地址：
 
-首先注释掉`setup_vm`中等值映射部分
-
-```c
-void setup_vm(void)
-{
-    unsigned long true_early_pgtbl = (unsigned long)early_pgtbl - PA2VA_OFFSET;
-    memset((void *)true_early_pgtbl, 0, PGSIZE);
-    // ((unsigned long *)true_early_pgtbl)[getVPN(PHY_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
-    ((unsigned long *)true_early_pgtbl)[getVPN(VM_START, 2)] = (0xf) | ((getPPN(PHY_START, 2)) << 28);
-    printk("setup_vm done!\n");
-}
+```assembly
+relocate:
+    #如果不进行等值映射
+    la t0, __virtual_switch
+    csrw stvec, t0
+    # set ra = ra + PA2VA_OFFSET
+    # set sp = sp + PA2VA_OFFSET (If you have set the sp before)
+    li t0, 0xffffffe000000000
+    li t1, 0x0000000080000000
+    sub t0, t0, t1
+    add ra, ra, t0
+    # addi ra, ra, 4
+    add sp, sp, t0
+    ...
 ```
+
+然后在entry.S的`_traps`标签前创建`__virtual_switch`：
+
+```assembly
+__virtual_switch:
+        la t0, mm_init
+        csrw sepc, t0
+_traps:
+		...
+```
+
+在上面的代码中，我将`sepc`的值设置为了mm_init函数的地址（此时已经是虚拟地址），这样在下方的`_traps`中的`sret`时，pc中的地址就会变为虚拟地址，也就完成了从物理地址到虚拟地址的地址转换。
+
+那么我们在什么时候会遇到第一次中断呢？
+
+```
+# set satp
+    add t1,t1,t2
+    csrw satp,t1
+# flush tlb
+    sfence.vma zero, zero
+# flush icache
+    fence.i
+```
+
+实际上我们在设置`satp`后刷新TLB和cache后，pc仍然指向物理地址，而我们的指令由于没做等值映射都在虚拟地址了，此时就会因为缺页异常而跳转到我们的`stvec`中的位置完成我们上述的地址转换了。
 

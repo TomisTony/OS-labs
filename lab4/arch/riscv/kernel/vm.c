@@ -98,13 +98,11 @@ void setup_vm_final(void) {
 
     printk("satp set done!\n");
 
-    // flush TLB
-    asm volatile("sfence.vma zero, zero");
+    printk("stext = %ld\n",_stext[0]);
+    printk("srodata = %ld\n",_srodata[0]);
 
-    // flush icache
-    asm volatile("fence.i");
-    return;
 }
+
 
 /* 创建多级页表映射关系 */
 /*

@@ -77,15 +77,14 @@ _start:
         call start_kernel
 relocate:
     #如果不进行等值映射
-    # la t0, __virtual_switch
-    # csrw stvec, t0
+    #la t0, __virtual_switch
+    #csrw stvec, t0
     # set ra = ra + PA2VA_OFFSET
     # set sp = sp + PA2VA_OFFSET (If you have set the sp before)
     li t0, 0xffffffe000000000
     li t1, 0x0000000080000000
     sub t0, t0, t1
     add ra, ra, t0
-    # addi ra, ra, 4
     add sp, sp, t0
 
     # set satp with early_pgtbl
