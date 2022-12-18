@@ -98,8 +98,12 @@ void setup_vm_final(void) {
 
     printk("satp set done!\n");
 
-    printk("stext = %ld\n",_stext[0]);
-    printk("srodata = %ld\n",_srodata[0]);
+    // flush TLB
+    asm volatile("sfence.vma zero, zero");
+
+    // flush icache
+    asm volatile("fence.i");
+    return;
 
 }
 

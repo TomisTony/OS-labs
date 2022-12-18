@@ -85,6 +85,7 @@ relocate:
     li t1, 0x0000000080000000
     sub t0, t0, t1
     add ra, ra, t0
+    # addi ra, ra, 4
     add sp, sp, t0
 
     # set satp with early_pgtbl
