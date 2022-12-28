@@ -67,10 +67,12 @@ _start:
         addi sp,sp,64
 
     # ------------------
+        # 取消开启响应所有S态trap
+        # 防止打断start_kernel中的schedule()
         # set sstatus[SIE] = 1
-        csrr t0, sstatus
-        ori t0,t0,0x2
-        csrw sstatus,t0
+        # csrr t0, sstatus
+        # ori t0,t0,0x2
+        # csrw sstatus,t0
 
     # ------------------
         call start_kernel

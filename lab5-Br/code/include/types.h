@@ -2,5 +2,6 @@
 #define _TYPE_H
 
 typedef unsigned long uint64;
+typedef unsigned long uint64_t;
 
 #endif

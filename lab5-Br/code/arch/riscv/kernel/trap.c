@@ -1,6 +1,9 @@
 #include "printk.h"
 #include "proc.h"
-void trap_handler(unsigned long scause, unsigned long sepc)
+#include "../include/syscall.h"
+
+
+void trap_handler(unsigned long scause, unsigned long sepc, struct pt_regs *regs)
 {
     // 通过 `scause` 判断trap类型
     // 如果是interrupt 判断是否是timer interrupt
@@ -10,12 +13,15 @@ void trap_handler(unsigned long scause, unsigned long sepc)
 
     // YOUR CODE HERE
     unsigned long timer = 0x8000000000000005;
+    unsigned long syscall_flag = 0x8;    //environment-call-from-U-mode
     // interrupt or exception
-    if (timer == scause)
+    if (scause == timer)
     {
-        printk("%s", "[S] Supervisor Mode Timer Interrupt\n");
         clock_set_next_event();
         do_timer();
         
+    }
+    else if(scause == syscall_flag){
+        syscall(regs, sepc);
     }
 }

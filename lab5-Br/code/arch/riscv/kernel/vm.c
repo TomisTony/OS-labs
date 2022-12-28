@@ -118,14 +118,12 @@ void setup_vm_final(void) {
     可以使用 V bit 来判断页表项是否存在
 */
 void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress, uint64 size, int perm) {
-    int page_num = size / (uint64)PGSIZE; //一共需要映射的页数
+    int page_num = ((size-1) / (uint64)PGSIZE)+1; //一共需要映射的页数,整数除法，向上取整
     int pgtblIndex = getVPN(virtualAddress,2);//目前已分配到的根页表Entry的Index
     int secondLevelPageTableEntryIndex = getVPN(virtualAddress,1);
     int thirdLevelPageTableEntryIndex = getVPN(virtualAddress,0);
     uint64* secondEntryAddress;//根页表的Entry中储存的PPN，也就是我们要的二级页表地址
     uint64* thirdEntryAddress;//二级页表的Entry中储存的PPN，也就是我们要的三级页表地址
-
-    printk("create_mapping begin! page_num:%d\n",page_num);
 
     for(int i = 0; i < page_num; i++){
 
@@ -133,7 +131,6 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
         uint64* nowPgtblEntryAddress = pgtbl + pgtblIndex;//pgtbl的某个Entry(储存我们要的二级页表)的地址
 
         //step2: 在根页表上找到对应的二级页表的地址，对应的Entry没有内容的话就new一个二级页表存到Entry
-
         //检查是否在一个空Entry上
         if(isPageNotValid(nowPgtblEntryAddress)){
             //new一个二级页表来填充这块区域
@@ -175,17 +172,14 @@ void create_mapping(uint64 *pgtbl, uint64 virtualAddress, uint64 physicalAddress
         if(thirdLevelPageTableEntryIndex == 512){
             thirdLevelPageTableEntryIndex = 0;
             secondLevelPageTableEntryIndex++;
-            printk("Second Level Page +1\n");
         }
         if(secondLevelPageTableEntryIndex == 512){
             secondLevelPageTableEntryIndex = 0;
             pgtblIndex++;
-            printk("PGT Level Page +1\n");
         }
         // if(pgtbl == 512){/*error*/}
 
     }
-    printk("create_mapping finish!\n");
 }
 
 

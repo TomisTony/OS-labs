@@ -13,10 +13,12 @@ CFLAG = ${CF} ${INCLUDE} -D SJF
 
 .PHONY:all run debug clean
 all:
-	${MAKE} -C user all
+	
 	${MAKE} -C lib all
 	${MAKE} -C init all
+	${MAKE} -C user all
 	${MAKE} -C arch/riscv all
+	
 	
 	@echo -e '\n'Build Finished OK
 

@@ -6,10 +6,9 @@
 #include "rand.h"
 
 extern void __dummy();
-
-struct task_struct *idle;           // idle process
-struct task_struct *current;        // 指向当前运行线程的 `task_struct`
-struct task_struct *task[NR_TASKS]; // 线程数组, 所有的线程都保存在此
+extern char swapper_pg_dir[];
+extern char uapp_start[];
+extern char uapp_end[];
 
 /* 线程初始化 创建 NR_TASKS 个线程 */
 void task_init()
@@ -44,6 +43,50 @@ void task_init()
 
         task[i]->thread.ra = (uint64)__dummy;
         task[i]->thread.sp = (uint64)task[i] + PGSIZE;
+
+        //set S-Mode and U-Mode stack
+        //一个坑,thread_info没有分配内存。
+        //解决方案:给一个page(不过有点浪费QAQ)
+        task[i]->thread_info = (struct thread_info*)alloc_page();
+        task[i]->thread_info->kernel_sp = task[i]->thread.sp;
+        // task[i]->thread_info->kernel_sp = (uint64)task[i] + PGSIZE;
+        task[i]->thread_info->user_sp = alloc_page();
+
+        //为每个用户态创建自己的页表
+        pagetable_t pageTable = alloc_page();
+        //复制内核页表，避免在陷入切换U/S-Mode时需要立即更换satp
+        for (uint64 i = 0; i < PGSIZE; i++) 
+            ((char*)pageTable)[i] = ((char*)swapper_pg_dir)[i];
+
+        //映射uapp,给予XWR权限,UV也为1
+        uint64 virtualAddress = USER_START;
+        uint64 physicalAddress = (uint64)(uapp_start)-PA2VA_OFFSET;
+        create_mapping(pageTable, virtualAddress, physicalAddress, (uint64)(uapp_end)-(uint64)(uapp_start), 31);
+
+        //映射U-Mode Stack,给予WR权限,UV也为1
+        virtualAddress = USER_END-PGSIZE;
+        physicalAddress = task[i]->thread_info->user_sp-PA2VA_OFFSET;
+        create_mapping(pageTable, virtualAddress, physicalAddress, PGSIZE, 23);
+
+        //set sepc
+        task[i]->thread.sepc = USER_START;
+
+        //set sstatus
+        uint64 pre_sstatus = csr_read(sstatus);
+        uint64 now_sstatus = pre_sstatus & 0xfffffffffffffeff; //sstatus[SPP] = 0
+        now_sstatus = now_sstatus | (1<<5); //sstatus[SPIE] = 1
+        now_sstatus = now_sstatus | (1<<18); //sstatus[SUM] = 1
+        task[i]->thread.sstatus = now_sstatus;
+
+        //set sscratch
+        task[i]->thread.sscratch = USER_END;
+
+        //设置pgd,即satp
+        uint64 pre_satp = csr_read(satp);
+        uint64 satp_prefix = (pre_satp >> 44) << 44;
+        uint64 now_satp = satp_prefix | (((uint64)pageTable-PA2VA_OFFSET) >> 12);
+        task[i]->pgd = now_satp;
+
     }
 
     printk("...proc_init done!\n");
